@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopGreen</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css"/>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <script src="app.js" defer></script>
+    <script src="details.js"></script>
+    <style>
+      ion-toolbar, ion-tab-bar {
+        --background: #329482;
+        --color: white;
+        --color-selected:  #14332e;
+
+        --padding-top: 20px;
+        --padding-bottom: 20px;
+      }
+
+      ion-button {
+        --background: #72c0b2;
+      }
+
+      .example-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height:90%;
+      }
+
+      .flex {
+        display: flex;
+      }
+
+      .card-details {
+        flex: 1;
+        padding: 10px; /* Adjust as needed */
+      }
+
+      .card-img {
+        width:25%;
+        margin-right: 10px; /* Spacing between image and content */
+      }
+
+      .card-button {
+        width:25%;
+      }
+    </style>
+</head>
+<body>
+    <ion-app>
+
+      <!-- Tabs -->
+        <ion-tabs>
+
+
+          <!-- Browse Food -->
+            <ion-tab tab="home">
+              <ion-nav id="home-nav"></ion-nav>
+              <div id="home-page">
+                <ion-header>
+                  <ion-toolbar>
+                    <ion-title>ShopGreen</ion-title>
+                    <ion-list>
+                      <ion-item>
+                        <ion-select id="country-select" label="Choose your location" value="united-kingdom">
+                          <ion-select-option value="uk">United Kingdom</ion-select-option>
+                          <ion-select-option value="fr">France</ion-select-option>
+                          <ion-select-option value="es">Spain</ion-select-option>
+                        </ion-select>
+                      </ion-item>
+                    </ion-list>
+                  </ion-toolbar>
+                </ion-header>
+                <ion-content>
+                    <!--
+                    <ion-list id="list-output">
+                    
+                      <ion-item>
+                        Loading..
+                      </ion-item>
+
+                    </ion-list>
+                   -->
+                    <ion-list id="infinite-list"></ion-list>
+                    <ion-infinite-scroll>
+                      <ion-infinite-scroll-content></ion-infinite-scroll-content>
+                    </ion-infinite-scroll>
+                </ion-content>
+              </div>
+            </ion-tab>
+
+
+          <!-- Shopping List -->
+            <ion-tab tab="list">
+              <ion-nav id="list-nav"></ion-nav>
+              <div id="list-page">
+                <ion-header>
+                  <ion-toolbar>
+                    <ion-title>ShopGreen</ion-title>
+
+                  </ion-toolbar>
+                </ion-header>
+                <ion-content>
+                  <ion-list id="shopping-list-output"> <!-- every time an item is added to the shopping list this list is regenerated -->
+                    Shopping List goes here. Fetch from localStorage
+                  </ion-list>
+                </ion-content>
+              </div>
+            </ion-tab>
+
+
+          <!-- Search -->
+            <ion-tab tab="search">
+              <ion-nav id="search-nav"></ion-nav>
+              <div id="search-page">
+                <ion-header>
+                  <ion-toolbar>
+                    <ion-title>ShopGreen</ion-title>
+                  </ion-toolbar>
+                  <ion-toolbar>
+                    <ion-searchbar id="input-search" debounce="1000"></ion-searchbar>
+                  </ion-toolbar>
+                </ion-header>
+                <ion-content padding>
+                  <div id="search-output">Enter a barcode to find the exact details of that product.</div>
+                </ion-content>
+              </div>
+            </ion-tab>
+            <ion-tab-bar slot="bottom">
+              <ion-tab-button tab="home">
+                <ion-icon name="nutrition"></ion-icon>
+                Browse food
+              </ion-tab-button>
+              <ion-tab-button tab="search">
+                <ion-icon name="search"></ion-icon>
+                Search
+              </ion-tab-button>
+              <ion-tab-button tab="list">
+                <ion-icon name="list"></ion-icon>
+                Shopping List
+              </ion-tab-button>
+            </ion-tab-bar>
+          </ion-tabs>
+    </ion-app>
+
+</body>
+</html>
