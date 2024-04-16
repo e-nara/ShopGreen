@@ -35,7 +35,8 @@ reload(); //on load update the browse food display
 updateShoppingList();
 
 function reload(){
-    getDetails(locationChoice.value,1).then(updateDisplay);
+    pageCount = 1;
+    getDetails(locationChoice.value,pageCount).then(updateDisplay);
 }
 
 locationChoice.innerHTML = `${countries.map(country => `
@@ -49,6 +50,7 @@ locationChoice.innerHTML = `${countries.map(country => `
 
 function getDetails(country,page){
 
+    console.log(`loading page ${page} for ${country}`);
     console.log(locationChoice.value);
     return fetch(`https://world.openfoodfacts.net/api/v2/search/q?fields=code,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en&packagings_complete=1&origins_tags=${country}&countries=${country}&page=${page}`)
 
@@ -75,7 +77,7 @@ function getProductByBarcode(barcode){
 }
 
 //process the response further
-function updateDisplay(jsonObj, append = false) {
+async function updateDisplay(jsonObj, append = false) {
     // Save the API response to local storage for development purposes
     let jsonObjStringify = JSON.stringify(jsonObj);
     localStorage.setItem('apiResponse', jsonObjStringify);
@@ -92,11 +94,29 @@ function updateDisplay(jsonObj, append = false) {
         productsData = productsData.concat(productArray); //continually add to productsdata.
     }
 
+    // Loop through each product and load its image asynchronously
+    for (const product of productArray) {
+        try {
+            const imageURL = product.image_url;
+            const response = await fetch(imageURL);
+            if (!response.ok) {
+                throw new Error('Failed to fetch image');
+            }
+            const imageData = await response.blob();
+            const imageObjectURL = URL.createObjectURL(imageData);
+            product.imageObjectURL = imageObjectURL; // Store the image object URL in the product object
+        } catch (error) {
+            console.error('Error loading image for product:', product.code, error);
+            // Set a placeholder image or handle the error as needed
+            product.imageObjectURL = 'https://ionicframework.com/docs/img/demos/card-media.png'; // Set an empty URL or a placeholder image URL
+        }
+    }
+
     // Generate HTML for the products
     let productListHTML = productArray.map(product => `
         <ion-card button onclick='showDetailsHome("${product.code}")'>
             <div class="flex">
-                <img class="card-img" src="${product.image_url}" alt="Image Description">
+                <img class="card-img" src="${product.imageObjectURL}" alt="Image Description">
                 <ion-card-content class="card-details">
                     <ion-card-title class="product-list-title">${product.product_name}</ion-card-title>
                     <ion-card-subtitle>${product.brands}</ion-card-subtitle>
@@ -124,9 +144,9 @@ const infiniteScroll = document.querySelector('ion-infinite-scroll');
 infiniteScroll.addEventListener('ionInfinite', (event) => {
     setTimeout(() => {
         // Load more pages when infinite scroll is triggered
-        getDetails(locationChoice.value, pageCount + 1).then(jsonObj => updateDisplay(jsonObj, true));
+        getDetails(locationChoice.value, pageCount).then(jsonObj => updateDisplay(jsonObj, true));
         event.target.complete();
-    }, 500); // Distance of 500
+    }, 1000); 
 });
 
 
