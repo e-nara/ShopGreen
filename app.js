@@ -20,12 +20,14 @@ const locationChoice = document.getElementById('country-select');
 
 const outputList = document.getElementById('list-output');
 const shoppingListOutput = document.getElementById('shopping-list-output');
+const resultsText = document.getElementById('results-text');
 
 const list = document.getElementById('infinite-list');
 
 searchBar.addEventListener('ionInput', handleSearch);
 locationChoice.addEventListener('ionChange', reload);
 
+var currentCountry;
 var pageCount = 1; //page count is 1 onload. iterates if ion infinite scroll is triggered.
 
 console.log("connected");
@@ -36,13 +38,19 @@ function reload(){
     getDetails(locationChoice.value,1).then(updateDisplay);
 }
 
+locationChoice.innerHTML = `${countries.map(country => `
+            
+<ion-select-option value="${country.id}">${country.name}</ion-select-option>
+
+`).join('')}`;
+
 
 // ---- Whole API CALL --- //
 
 function getDetails(country,page){
 
     console.log(locationChoice.value);
-    return fetch(`https://world.openfoodfacts.net/api/v2/search/q?fields=code,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en&origins_tags=${country}&page=${page}`)
+    return fetch(`https://world.openfoodfacts.net/api/v2/search/q?fields=code,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en&packagings_complete=1&origins_tags=${country}&countries=${country}&page=${page}`)
 
     .then(getJson)
     .catch(reportError);
@@ -67,70 +75,59 @@ function getProductByBarcode(barcode){
 }
 
 //process the response further
-function updateDisplay(jsonObj){
-    //console.log(jsonObj);
-
-    //save the apiresponse to localstorage in case API goes down and we still need to test -- for development
+function updateDisplay(jsonObj, append = false) {
+    // Save the API response to local storage for development purposes
     let jsonObjStringify = JSON.stringify(jsonObj);
-    localStorage.setItem('apiResponse', jsonObjStringify)
+    localStorage.setItem('apiResponse', jsonObjStringify);
 
+    // Extract the products from the API response
     let productArray = jsonObj.products;
-    productsData = productArray;
 
-    list.innerHTML = `
-        ${productArray.map(product => `
-                
-                <ion-card button onclick="showDetailsHome('${product.product_name}')">
-                      <div class="flex">
-                        <img class="card-img" src="${product.image_url}" alt="Image Description">
-                        
-                        <ion-card-content class="card-details">
-                          <h2>${product.product_name}</h2>
-                          <p>property 1</p>
-                          
-                        </ion-card-content>
-                        <ion-button class="card-button ion-text-wrap" onclick="addToShoppingList('${product.code}')">Add to Shopping List</ion-button>
-                      </div>
-                </ion-card button>
-                 
-                `).join('\n')}
+    // append is false on first load
+    if (!append) {
+        productsData = productArray;
+        resultsText.innerHTML = `${jsonObj.count} results for items originating from ${locationChoice.value}`
+    } else {
+        // append is true when scrolling
+        productsData = productsData.concat(productArray); //continually add to productsdata.
+    }
 
-    `
+    // Generate HTML for the products
+    let productListHTML = productArray.map(product => `
+        <ion-card button onclick='showDetailsHome("${product.code}")'>
+            <div class="flex">
+                <img class="card-img" src="${product.image_url}" alt="Image Description">
+                <ion-card-content class="card-details">
+                    <ion-card-title class="product-list-title">${product.product_name}</ion-card-title>
+                    <ion-card-subtitle>${product.brands}</ion-card-subtitle>
+                    <ion-button onclick="addToShoppingList('${product.code}', event)">Add to Shopping List</ion-button>
+                </ion-card-content>
+            </div>
+        </ion-card button>
+    `).join('\n');
 
-}
+    // If append is false, meaning it's not called from infinite scrolling, replace the entire product list
+    if (!append) {
+        list.innerHTML = productListHTML;
+    } else {
+        // If append is true, meaning it's called from infinite scrolling, append new products to the existing list
+        list.innerHTML += productListHTML;
+    }
 
-function loadMorePages(jsonObj){
-    //console.log(jsonObj);
-
-    //save the apiresponse to localstorage in case API goes down and we still need to test -- for development
-    let jsonObjStringify = JSON.stringify(jsonObj);
-    localStorage.setItem('apiResponse', jsonObjStringify)
-
-    let productArray = jsonObj.products;
-    productsData = productArray;
-
-    list.innerHTML += `
-        ${productArray.map(product => `
-                
-                <ion-card button onclick="showDetailsHome('${product.product_name}')">
-                      <div class="flex">
-                        <img class="card-img" src="${product.image_url}" alt="Image Description">
-                        
-                        <ion-card-content class="card-details">
-                          <h2>${product.product_name}</h2>
-                          <p>property 1</p>
-                          
-                        </ion-card-content>
-                        <ion-button class="card-button ion-text-wrap" onclick="addToShoppingList('${product.code}')">Add to Shopping List</ion-button>
-                      </div>
-                </ion-card button>
-                 
-                `).join('\n')}
-
-    `
+    // Increment the page count for infinite scrolling
     pageCount++;
-
 }
+
+//-- Infinite Scroll --//
+// Sampled from Ionic docs
+const infiniteScroll = document.querySelector('ion-infinite-scroll');
+infiniteScroll.addEventListener('ionInfinite', (event) => {
+    setTimeout(() => {
+        // Load more pages when infinite scroll is triggered
+        getDetails(locationChoice.value, pageCount + 1).then(jsonObj => updateDisplay(jsonObj, true));
+        event.target.complete();
+    }, 500); // Distance of 500
+});
 
 
 
@@ -164,7 +161,11 @@ function handleSearch(){
             </ion-card-content>
         </ion-card>
         `
-    }).catch(reportError);
+    }).catch(function(error){
+        reportError(error);
+
+        searchOutput.innerHTML = `Sorry, this item doesn't seem to be in our database.`
+    });
 }
 
 
@@ -175,42 +176,49 @@ const navList = document.getElementById('list-nav');
 const navSearch = document.getElementById('search-nav');
 
 
-async function showDetailsHome(aTitle) {
+async function showDetailsHome(code) {
+    console.log("Showing details of: " + code);
+    console.log(productsData);
+    try {
+        // Find the product asynchronously
+        let product = productsData.find(object => object.code === code);
 
-    let product = new Object;
+        console.log(product);
 
-    for (object of productsData){ //search for a match to pass
-        if(object.product_name === aTitle){ //if found the right animal
-            product = object; //assign animal object to the right animal from the array in data
+        if (!product) {
+            throw new Error('Product not found');
         }
+
+        // Push the route once the product is found
+        await navHome.push('nav-detail', { product });
+    } catch (error) {
+        console.error('Error showing details:', error);
     }
-
-    navHome.push('nav-detail', {product}); //when clicked render this route, pass down the animal object
-
-    //console.log(aTitle);
 }
 
-async function showDetailsList(aTitle) {
+//-- Show Details --//
+//using the barcode as a reference, show a screen with detailed info on the product
 
-    let product = new Object;
+async function showDetailsList(code) {
+    try {
+        // Find the product asynchronously
+        let product = productsData.find(object => object.code === code);
 
-    for (object of productsData){ //search for a match to pass
-        if(object.product_name === aTitle){ //if found the right animal
-            product = object; //assign animal object to the right animal from the array in data
+        if (!product) {
+            throw new Error('Product not found');
         }
+
+        // Push the route once the product is found
+        await navList.push('nav-detail', { product });
+    } catch (error) {
+        console.error('Error showing details:', error);
     }
-
-    navList.push('nav-detail', {product}); //when clicked render this route, pass down the animal object
-
-    //console.log(aTitle);
 }
-
-
-
 
 //-- Add to Shopping List --//
 
-function addToShoppingList(productCode){
+function addToShoppingList(productCode, event){
+    event.stopPropagation();
     console.log("called");
     array = [];
     array.push(productCode);
@@ -233,12 +241,28 @@ function addToShoppingList(productCode){
             parseStorage.push(productCode);
             //console.log(parseStorage);
             localStorage.setItem('shoppingList', JSON.stringify(parseStorage));
-            updateShoppingList(); //add this product to the list 
         } else {
             console.log("already in shopping list");
         }
     }
+    updateShoppingList(); //add this product to the list 
+}
 
+function deleteFromShoppingList(code){
+    event.stopPropagation();
+    console.log("Deleting: "+ code +" from shopping list");
+    let currentStorage = localStorage.getItem('shoppingList'); //string
+    let parseStorage = JSON.parse(currentStorage);
+    console.log("current list: " + parseStorage)
+    let newArray = parseStorage.filter(function(id){
+        return id != code;
+    })
+
+    console.log("filtered: " + newArray);
+
+    localStorage.setItem('shoppingList', JSON.stringify(newArray));
+
+    updateShoppingList();
 }
 
 //-- Populate Shopping List --//
@@ -266,11 +290,12 @@ function updateShoppingList(){
                 console.log(productData.product);
                 shoppingListOutput.innerHTML += `
                 
-                <ion-item button onclick="showDetailsList('${productData.product.product_name}')">
+                <ion-item button onclick="showDetailsList('${productData.product.code}')">
                         <ion-avatar slot="start">
                             <img src="${productData.product.image_url}">
                         </ion-avatar>
                         <ion-label><h1>${productData.product.product_name}</h1></ion-label>
+                        <ion-button slot="end" onclick='deleteFromShoppingList("${productData.product.code}", event)'> - </ion-button>
                     </ion-item button>
                 
                 `
@@ -284,16 +309,5 @@ function updateShoppingList(){
 
 }
 
-
-
-//-- Infinite Scroll --//
-//sampled from ionic docs
-  const infiniteScroll = document.querySelector('ion-infinite-scroll');
-  infiniteScroll.addEventListener('ionInfinite', (event) => {
-    setTimeout(() => {
-        getDetails(locationChoice.value,pageCount+1).then(loadMorePages)
-      event.target.complete();
-    }, 500); //distance of 500
-  });
 
 

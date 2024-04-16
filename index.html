@@ -10,6 +10,7 @@
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     <script src="app.js" defer></script>
     <script src="details.js"></script>
+    <script src="countries.js"></script>
     <style>
       ion-toolbar, ion-tab-bar {
         --background: #329482;
@@ -23,6 +24,23 @@
       ion-button {
         --background: #72c0b2;
       }
+
+      ion-col {
+        border: solid 1px #fff;
+        text-align: center;
+        --ion-grid-width: 30px;
+      }
+
+      ion-grid {
+        --ion-grid-width: 30px;
+      }
+
+      .packaging-info-row{
+        color: #030e0e;
+        background-color: #a4c3bf;
+      }
+
+      .packaging-info
 
       .example-content {
         display: flex;
@@ -63,28 +81,21 @@
               <div id="home-page">
                 <ion-header>
                   <ion-toolbar>
-                    <ion-title>ShopGreen</ion-title>
-                    <ion-list>
-                      <ion-item>
-                        <ion-select id="country-select" label="Choose your location" value="united-kingdom">
-                          <ion-select-option value="uk">United Kingdom</ion-select-option>
-                          <ion-select-option value="fr">France</ion-select-option>
-                          <ion-select-option value="es">Spain</ion-select-option>
-                        </ion-select>
-                      </ion-item>
-                    </ion-list>
+                    <ion-title>Browse Local Food</ion-title>
                   </ion-toolbar>
                 </ion-header>
                 <ion-content>
-                    <!--
-                    <ion-list id="list-output">
-                    
-                      <ion-item>
-                        Loading..
-                      </ion-item>
-
-                    </ion-list>
-                   -->
+                  <ion-list>
+                    <ion-item>
+                      <ion-select id="country-select" label="Choose your location" value="UK">
+                        <ion-select-option value="uk">United Kingdom</ion-select-option>
+                        <ion-select-option value="fr">France</ion-select-option>
+                        <ion-select-option value="es">Spain</ion-select-option>
+                      </ion-select>
+                    </ion-item>
+                    <ion-item id="results-text">
+                    </ion-item>
+                  </ion-list>
                     <ion-list id="infinite-list"></ion-list>
                     <ion-infinite-scroll>
                       <ion-infinite-scroll-content></ion-infinite-scroll-content>
@@ -100,13 +111,13 @@
               <div id="list-page">
                 <ion-header>
                   <ion-toolbar>
-                    <ion-title>ShopGreen</ion-title>
+                    <ion-title>Shopping List</ion-title>
 
                   </ion-toolbar>
                 </ion-header>
                 <ion-content>
                   <ion-list id="shopping-list-output"> <!-- every time an item is added to the shopping list this list is regenerated -->
-                    Shopping List goes here. Fetch from localStorage
+                    <ion-item>No items currently in shopping list.</ion-item>
                   </ion-list>
                 </ion-content>
               </div>
@@ -119,13 +130,13 @@
               <div id="search-page">
                 <ion-header>
                   <ion-toolbar>
-                    <ion-title>ShopGreen</ion-title>
+                    <ion-title>ShopGreen Barcode Search</ion-title>
                   </ion-toolbar>
                   <ion-toolbar>
-                    <ion-searchbar id="input-search" debounce="1000"></ion-searchbar>
+                    <ion-searchbar id="input-search" debounce="2000"></ion-searchbar>
                   </ion-toolbar>
                 </ion-header>
-                <ion-content padding>
+                <ion-content [fullscreen]="true" class="ion-padding">
                   <div id="search-output">Enter a barcode to find the exact details of that product.</div>
                 </ion-content>
               </div>

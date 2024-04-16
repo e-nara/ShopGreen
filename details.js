@@ -1,5 +1,6 @@
 class NavDetail extends HTMLElement {
   connectedCallback() {
+
     this.innerHTML = `  
     
     <ion-header>
@@ -12,28 +13,31 @@ class NavDetail extends HTMLElement {
     </ion-header>
     
     <ion-content fullscreen class="ion-padding">
-    <ion-card>
-        <ion-card-header>
-            <ion-card-title>${this.product.product_name}</ion-card-title>
-            <ion-card-subtitle>${this.product.brands}</ion-card-subtitle>
-        </ion-card-header>
+            <h1>${this.product.product_name}</h1>
+            <h2>${this.product.brands}</h2>
 
         <ion-img src="${this.product.image_url}">
         </ion-img>
 
         <ion-card-content>
-            <ion-list>
+            <ion-grid>
+              <ion-row>
+                <ion-col>Item</ion-col>
+                <ion-col>Material</ion-col>
+                <ion-col>Recyling</ion-col>
+              </ion-row>
+
+
             ${this.product.packagings.map(item => `
-            
-                    <ion-item >
-                        <ion-label>${item.shape}:</ion-label>
-                        <ion-label id="label-city">${item.material}</ion-label>
-                    </ion-item>
+
+                    <ion-row class="packaging-info-row">
+                      <ion-col>${item.shape.split(':')[1].replace(/-/g, ' ')}</ion-col>
+                      <ion-col>${item.material ? item.material.split(':')[1].replace(/-/g, ' ') : 'Unknown'}</ion-col>
+                      <ion-col>${item.recycling ? item.recycling.split(':')[1].replace(/-/g, ' ') : 'Not Available'}</ion-col>
+                    </ion-row>
             
             `).join('')}
-            </ion-list>
-        </ion-card-content>
-    </ion-card>
+            </ion-grid>
     </ion-content>
       
     `;
