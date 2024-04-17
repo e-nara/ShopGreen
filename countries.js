@@ -1,3 +1,5 @@
+//dynamically generated in the ion-select element in app.js
+
 const countries = [
     { name: 'Afghanistan', id: 'AF' },
     { name: 'Åland Islands', id: 'AX' },

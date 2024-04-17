@@ -17,6 +17,7 @@ const searchBar = document.getElementById('input-search');
 const searchOutput = document.getElementById('search-output');
 
 const locationChoice = document.getElementById('country-select');
+const categoryChoice = document.getElementById('category-select');
 
 const outputList = document.getElementById('list-output');
 const shoppingListOutput = document.getElementById('shopping-list-output');
@@ -26,8 +27,8 @@ const list = document.getElementById('infinite-list');
 
 searchBar.addEventListener('ionInput', handleSearch);
 locationChoice.addEventListener('ionChange', reload);
+categoryChoice.addEventListener('ionChange', reload);
 
-var currentCountry;
 var pageCount = 1; //page count is 1 onload. iterates if ion infinite scroll is triggered.
 
 console.log("connected");
@@ -36,23 +37,24 @@ updateShoppingList();
 
 function reload(){
     pageCount = 1;
-    getDetails(locationChoice.value,pageCount).then(updateDisplay);
+    getDetails(locationChoice.value,categoryChoice.value,pageCount).then(updateDisplay);
 }
 
-locationChoice.innerHTML = `${countries.map(country => `
-            
+locationChoice.innerHTML = `${countries.map(country => `      
 <ion-select-option value="${country.id}">${country.name}</ion-select-option>
-
 `).join('')}`;
 
+categoryChoice.innerHTML = `${categories.map(category => `      
+<ion-select-option value="${category}">${category}</ion-select-option>
+`).join('')}`;
 
 // ---- Whole API CALL --- //
 
-function getDetails(country,page){
+function getDetails(country,category,page){
 
-    console.log(`loading page ${page} for ${country}`);
+    console.log(`loading page ${page} for ${country} ${category}`);
     console.log(locationChoice.value);
-    return fetch(`https://world.openfoodfacts.net/api/v2/search/q?fields=code,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en&packagings_complete=1&origins_tags=${country}&countries=${country}&page=${page}`)
+    return fetch(`https://world.openfoodfacts.net/api/v2/search/q?fields=code,product_quantity,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en,stores_tags&packagings_complete=1&origins_tags=${country}&countries=${country}&categories_tags=${category}&page=${page}`)
 
     .then(getJson)
     .catch(reportError);
@@ -70,7 +72,7 @@ function reportError(err){
 // --- Call the API for 1 product -- //
 function getProductByBarcode(barcode){
 
-    return fetch(`https://world.openfoodfacts.net/api/v2/product/${barcode}/q?fields=code,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en&countries_tags_en=united-kingdom`)
+    return fetch(`https://world.openfoodfacts.net/api/v2/product/${barcode}/q?fields=code,product_quantity,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en,stores_tags`)
     .then(getJson)
     .catch(reportError);
     
@@ -108,7 +110,7 @@ async function updateDisplay(jsonObj, append = false) {
         } catch (error) {
             console.error('Error loading image for product:', product.code, error);
             // Set a placeholder image or handle the error as needed
-            product.imageObjectURL = 'https://ionicframework.com/docs/img/demos/card-media.png'; // Set an empty URL or a placeholder image URL
+            product.imageObjectURL = 'https://ionicframework.com/docs/img/demos/card-media.png'; //placeholder image URL
         }
     }
 
@@ -118,9 +120,10 @@ async function updateDisplay(jsonObj, append = false) {
             <div class="flex">
                 <img class="card-img" src="${product.imageObjectURL}" alt="Image Description">
                 <ion-card-content class="card-details">
-                    <ion-card-title class="product-list-title">${product.product_name}</ion-card-title>
+                    <ion-card-title class="product-list-title">${product.product_quantity ? ` ${product.product_quantity}g ` : ''} ${product.product_name}</ion-card-title>
                     <ion-card-subtitle>${product.brands}</ion-card-subtitle>
-                    <ion-button onclick="addToShoppingList('${product.code}', event)">Add to Shopping List</ion-button>
+                    <ion-card-subtitle style="color: ${product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'green' : 'red'}">${product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'Recyclable/Bio-degradable' : 'Non-recylable/Bio-degradable'}</ion-card-subtitle>
+                    <ion-button expand="block" onclick="addToShoppingList('${product.code}', ${product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials}, event)">Add to Shopping List</ion-button>
                 </ion-card-content>
             </div>
         </ion-card button>
@@ -144,7 +147,7 @@ const infiniteScroll = document.querySelector('ion-infinite-scroll');
 infiniteScroll.addEventListener('ionInfinite', (event) => {
     setTimeout(() => {
         // Load more pages when infinite scroll is triggered
-        getDetails(locationChoice.value, pageCount).then(jsonObj => updateDisplay(jsonObj, true));
+        getDetails(locationChoice.value, categoryChoice.value, pageCount).then(jsonObj => updateDisplay(jsonObj, true));
         event.target.complete();
     }, 1000); 
 });
@@ -159,26 +162,45 @@ function handleSearch(){
         console.log(productData.product);
         searchOutput.innerHTML = `
         <ion-card>
-            <ion-card-header>
-                <ion-card-title>${productData.product.product_name}</ion-card-title>
-                <ion-card-subtitle>${productData.product.brands}</ion-card-subtitle>
-            </ion-card-header>
+        <img style="width:100%" src="${productData.product.image_url}"/>
+        <ion-card-header>
+          <ion-card-title>${productData.product.product_name}</ion-card-title>
+          <ion-card-subtitle>${productData.product.brands}</ion-card-subtitle>
+        </ion-card-header>
         
-            <ion-img src="${productData.product.image_url}">
-            </ion-img>
+        <ion-card-content>
 
-            <ion-card-content>
-                <ion-list>
-                ${productData.product.packagings.map(item => `
-                
-                        <ion-item >
-                            <ion-label>${item.shape}:</ion-label>
-                            <ion-label id="label-city">${item.material}</ion-label>
-                        </ion-item>
-                
-                `).join('')}
-                </ion-list>
-            </ion-card-content>
+          <ion-grid>
+                <ion-row class="header-row">
+                  <ion-col>Item</ion-col>
+                  <ion-col>Material</ion-col>
+                  <ion-col>Recyling</ion-col>
+                </ion-row>
+
+              ${productData.product.packagings.map(item => `
+
+                      <ion-row class="packaging-info-row">
+                        <ion-col>${item.shape ? item.shape.split(':')[1].replace(/-/g, ' ') : 'Not Available'}</ion-col>
+                        <ion-col>${item.material ? item.material.split(':')[1].replace(/-/g, ' ') : 'Unknown'}</ion-col>
+                        <ion-col>${item.recycling ? item.recycling.split(':')[1].replace(/-/g, ' ') : 'Not Available'}</ion-col>
+                      </ion-row>
+              
+              `).join('')}
+              </ion-grid>
+
+              <h2></h2>
+          
+          ${productData.product.stores_tags ? `
+            Available in:
+            <ion-list>
+              ${productData.product.stores_tags.map(item => `
+                <ion-item><ion-label>${item}</ion-label></ion-item>
+              `).join('')}
+            </ion-list>
+          ` : ''}
+          </ion-list
+
+          </ion-card-content>
         </ion-card>
         `
     }).catch(function(error){
@@ -237,14 +259,21 @@ async function showDetailsList(code) {
 
 //-- Add to Shopping List --//
 
-function addToShoppingList(productCode, event){
+function addToShoppingList(productCode, recyclable, event){
     event.stopPropagation();
     console.log("called");
     array = [];
     array.push(productCode);
     console.log(array);
 
-    //This whole thing is a mess. Fix later
+    if (recyclable == 0){
+        let currentRecycleCounter = parseInt(localStorage.getItem("recycled"));
+        if (!currentRecycleCounter){
+            currentRecycleCounter = 0;
+        }
+        currentRecycleCounter++;
+        localStorage.setItem("recycled",currentRecycleCounter);
+    }
 
     if(!localStorage.getItem('shoppingList')){
         console.log('empty');
@@ -255,7 +284,7 @@ function addToShoppingList(productCode, event){
         let currentStorage = localStorage.getItem('shoppingList'); //string
         //console.log("currentStorage: "+ currentStorage);
         
-        let parseStorage = JSON.parse(currentStorage); // array ? 
+        let parseStorage = JSON.parse(currentStorage);
         if(!parseStorage.includes(productCode)){ //we only want to add unique items to the shopping list
             console.log("added to shopping list")
             parseStorage.push(productCode);
@@ -264,7 +293,7 @@ function addToShoppingList(productCode, event){
         } else {
             console.log("already in shopping list");
         }
-    }
+    }    
     updateShoppingList(); //add this product to the list 
 }
 
@@ -295,7 +324,7 @@ function updateShoppingList(){
     //clear the existing content of shoppingListOutput
     shoppingListOutput.innerHTML = "";
 
-    if(!codeList){
+    if(!codeList || codeList == ""){ //shopping list may not exist or be empty, account for both scenarios.
         console.log("nothing in the shopping list");
         shoppingListOutput.innerHTML = `
             
@@ -323,9 +352,7 @@ function updateShoppingList(){
         }
     }
 
-    //for each barcode fetch the data and add it to the an array of objs
-    //take that array of objs and map it to the innerhtml
-    
+    shoppingListOutput.innerHTML += `<ion-item>You've saved ${localStorage.getItem("recycled")} items from the landfill so far!</ion-item>`;
 
 }
 

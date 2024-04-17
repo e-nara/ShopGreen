@@ -11,36 +11,34 @@
     <script src="app.js" defer></script>
     <script src="details.js"></script>
     <script src="countries.js"></script>
+    <script src="categories.js"></script>
     <style>
       ion-toolbar, ion-tab-bar {
-        --background: #329482;
+        --background: #229f88;
         --color: white;
         --color-selected:  #14332e;
 
         --padding-top: 20px;
         --padding-bottom: 20px;
       }
-
+      
       ion-button {
         --background: #72c0b2;
       }
 
       ion-col {
-        border: solid 1px #fff;
+        border: solid 1px #ffffff;
         text-align: center;
-        --ion-grid-width: 30px;
-      }
-
-      ion-grid {
-        --ion-grid-width: 30px;
       }
 
       .packaging-info-row{
-        color: #030e0e;
-        background-color: #a4c3bf;
+        background-color: #f0f1f1;
       }
 
-      .packaging-info
+      .header-row{
+        background-color: #329482;
+        color: white;
+      }
 
       .example-content {
         display: flex;
@@ -66,6 +64,10 @@
       .card-button {
         width:25%;
       }
+      
+      #country-select{
+        padding-right:20px;
+      }
     </style>
 </head>
 <body>
@@ -81,16 +83,20 @@
               <div id="home-page">
                 <ion-header>
                   <ion-toolbar>
-                    <ion-title>Browse Local Food</ion-title>
+                    <ion-title slot="start">Browse Local Food</ion-title>
+                    <ion-select slot="end" id="country-select" placeholder="Location" value="UK">
+                      <ion-select-option value="uk">United Kingdom</ion-select-option>
+                      <ion-select-option value="fr">France</ion-select-option>
+                      <ion-select-option value="es">Spain</ion-select-option>
+                    </ion-select>
                   </ion-toolbar>
                 </ion-header>
                 <ion-content>
                   <ion-list>
                     <ion-item>
-                      <ion-select id="country-select" label="Choose your location" value="UK">
-                        <ion-select-option value="uk">United Kingdom</ion-select-option>
-                        <ion-select-option value="fr">France</ion-select-option>
-                        <ion-select-option value="es">Spain</ion-select-option>
+                      
+                      <ion-select id="category-select" cancelText="" placeholder="Food Category" value="">
+                        <ion-select-option value="Chocolates">Chocolates</ion-select-option>
                       </ion-select>
                     </ion-item>
                     <ion-item id="results-text">
@@ -98,7 +104,8 @@
                   </ion-list>
                     <ion-list id="infinite-list"></ion-list>
                     <ion-infinite-scroll>
-                      <ion-infinite-scroll-content></ion-infinite-scroll-content>
+                      <ion-infinite-scroll-content>
+                      </ion-infinite-scroll-content>
                     </ion-infinite-scroll>
                 </ion-content>
               </div>
@@ -129,9 +136,6 @@
               <ion-nav id="search-nav"></ion-nav>
               <div id="search-page">
                 <ion-header>
-                  <ion-toolbar>
-                    <ion-title>ShopGreen Barcode Search</ion-title>
-                  </ion-toolbar>
                   <ion-toolbar>
                     <ion-searchbar id="input-search" debounce="2000"></ion-searchbar>
                   </ion-toolbar>
