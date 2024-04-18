@@ -154,7 +154,7 @@ infiniteScroll.addEventListener('ionInfinite', (event) => {
 
 
 
-//-- handle search --//
+//-- handle Barcode search --//
 function handleSearch(){
     let barcode = searchBar.value;
     console.log(barcode);
