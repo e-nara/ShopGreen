@@ -54,7 +54,7 @@ function getDetails(country,category,page){
 
     console.log(`loading page ${page} for ${country} ${category}`);
     console.log(locationChoice.value);
-    return fetch(`https://world.openfoodfacts.net/api/v2/search/q?fields=code,product_quantity,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en,stores_tags&packagings_complete=1&origins_tags=${country}&countries=${country}&categories_tags=${category}&page=${page}`)
+    return fetch(`https://world.openfoodfacts.net/api/v2/search/q?fields=code,origins_tags,product_quantity,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en,stores_tags&packagings_complete=1&origins_tags=${country}&countries=${country}&categories_tags=${category}&page=${page}`)
 
     .then(getJson)
     .catch(reportError);
@@ -72,7 +72,7 @@ function reportError(err){
 // --- Call the API for 1 product -- //
 function getProductByBarcode(barcode){
 
-    return fetch(`https://world.openfoodfacts.net/api/v2/product/${barcode}/q?fields=code,product_quantity,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en,stores_tags`)
+    return fetch(`https://world.openfoodfacts.net/api/v2/product/${barcode}/q?fields=code,origins_tags,product_quantity,product_name,brands,attribute_groups,packagings,image_url,ecoscore_data,agribalyse,countries_tags_en,stores_tags`)
     .then(getJson)
     .catch(reportError);
     
@@ -166,9 +166,13 @@ function handleSearch(){
         <ion-card-header>
           <ion-card-title>${productData.product.product_name}</ion-card-title>
           <ion-card-subtitle>${productData.product.brands}</ion-card-subtitle>
+          <p style="color: ${productData.product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'green' : 'red'}">${productData.product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'Recyclable/Bio-degradable' : 'Non-recylable/Bio-degradable'}</p>
         </ion-card-header>
         
         <ion-card-content>
+        <ion-text>Originates from: ${productData.product.origins_tags.map(location => `
+        <ion-item><ion-label>${location.split(':')[1].replace(/-/g, ' ')}</ion-label></ion-item>
+      `).join('')} </ion-text>
 
           <ion-grid>
                 <ion-row class="header-row">
@@ -343,7 +347,7 @@ function updateShoppingList(){
                         <ion-avatar slot="start">
                             <img src="${productData.product.image_url}">
                         </ion-avatar>
-                        <ion-label><h1>${productData.product.product_name}</h1></ion-label>
+                        <ion-label><h2>${productData.product.product_name}</h2><p style="color: ${productData.product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'green' : 'red'}">${productData.product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'Recyclable/Bio-degradable' : 'Non-recylable/Bio-degradable'}</p></ion-label>
                         <ion-button slot="end" onclick='deleteFromShoppingList("${productData.product.code}", event)'> - </ion-button>
                     </ion-item button>
                 
@@ -352,7 +356,9 @@ function updateShoppingList(){
         }
     }
 
-    shoppingListOutput.innerHTML += `<ion-item>You've saved ${localStorage.getItem("recycled")} items from the landfill so far!</ion-item>`;
+    if(localStorage.getItem("recycled")){
+        shoppingListOutput.innerHTML += `<ion-item>You've saved ${localStorage.getItem("recycled")} items from the landfill so far!</ion-item>`;
+    }
 
 }
 

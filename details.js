@@ -18,11 +18,16 @@ class NavDetail extends HTMLElement {
         <ion-card-header>
           <ion-card-title>${this.product.product_name}</ion-card-title>
           <ion-card-subtitle>${this.product.brands}</ion-card-subtitle>
+          <p style="color: ${this.product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'green' : 'red'}">${this.product.ecoscore_data.adjustments.packaging.non_recyclable_and_non_biodegradable_materials === 0 ? 'Recyclable/Bio-degradable' : 'Non-recylable/Bio-degradable'}</p>
         </ion-card-header>
         
         <ion-card-content>
 
-          <ion-grid>
+        <ion-text>Originates from: ${this.product.origins_tags.map(location => `
+        <ion-item><ion-label>${location.split(':')[1].replace(/-/g, ' ')}</ion-label></ion-item>
+      `).join('')} </ion-text>
+
+          <ion-grid class="ion-padding">
                 <ion-row class="header-row">
                   <ion-col>Item</ion-col>
                   <ion-col>Material</ion-col>
@@ -39,8 +44,6 @@ class NavDetail extends HTMLElement {
               
               `).join('')}
               </ion-grid>
-
-              <h2></h2>
           
           ${this.product.stores_tags ? `
             Available in:
