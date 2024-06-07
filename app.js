@@ -36,14 +36,16 @@ reload(); //on load update the browse food display
 updateShoppingList();
 
 function reload(){
-    pageCount = 1;
+    pageCount = 1; //pageCount is set back to 1 everytime the page is reloaded
     getDetails(locationChoice.value,categoryChoice.value,pageCount).then(updateDisplay);
 }
 
+//long list of locations is loaded in from another file
 locationChoice.innerHTML = `${countries.map(country => `      
 <ion-select-option value="${country.id}">${country.name}</ion-select-option>
-`).join('')}`;
+`).join('')}`; 
 
+//
 categoryChoice.innerHTML = `${categories.map(category => `      
 <ion-select-option value="${category}">${category}</ion-select-option>
 `).join('')}`;
